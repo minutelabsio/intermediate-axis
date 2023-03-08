@@ -4,13 +4,13 @@ import * as THREE from 'three'
 import { Easing, Util } from 'intween'
 import GUI from 'lil-gui'
 import store from 'store'
-import { createPendulumView } from './pendulum'
+import { createPendulumView } from './pendulum.js'
 import {
   createEllipsoidView,
   createEllipsoids,
   createRollingEllipsoid,
   createRollingMomentumEllipsoid,
-} from './ellipsoid'
+} from './ellipsoid.js'
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -27,15 +27,15 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 
-import { createSystem } from './physics'
+import { createSystem } from './physics.js'
 import { Group, Vector2, Vector3 } from 'three'
-import { Trail } from './trails'
-import { white, red, blue, grey, pink, mustard, orange } from './colors'
+import { Trail } from './trails.js'
+import { white, red, blue, grey, pink, mustard, orange } from './colors.js'
 
-import { $GC, $, $$ } from './slick-csb'
-import { createKissingSpheres } from './kissing-spheres'
+import { $GC, $, $$ } from './slick-csb.js'
+import { createKissingSpheres } from './kissing-spheres.js'
 
-const gc = $GC(module)
+Object.assign(window.THREE, THREE)
 
 const ARROW_LENGTH = 180
 
@@ -1065,19 +1065,21 @@ function main() {
   }
 
   const { rootGui } = makeGui(update)
-  gc(Object.values(View))
-  gc(rootGui)
   animate()
-  gc(pendulumView)
-  gc(ellipsoidView)
-  gc({
-    cleanup: () => {
-      stop = true
-      window.removeEventListener('resize', onWindowResize)
-      renderer.dispose()
-      controls.dispose()
-    },
-  })
+
+  // gc(Object.values(View))
+  // gc(rootGui)
+
+  // gc(pendulumView)
+  // gc(ellipsoidView)
+  // gc({
+  //   cleanup: () => {
+  //     stop = true
+  //     window.removeEventListener('resize', onWindowResize)
+  //     renderer.dispose()
+  //     controls.dispose()
+  //   },
+  // })
 }
 
 main()

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { white, red, blue, grey, pink, mustard } from './colors'
+import { white, red, blue, grey, pink, mustard } from './colors.js'
 
 // Ttil = T / (L^2/I2/2)
 

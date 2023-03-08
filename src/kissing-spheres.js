@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { white, red, blue, grey, pink, mustard } from './colors'
+import { white, red, blue, grey, pink, mustard } from './colors.js'
 
 export function createKissingSpheres(resolution = 128) {
   // Create sphere geometry and material
