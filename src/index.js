@@ -35,8 +35,6 @@ import { white, red, blue, grey, pink, mustard, orange } from './colors.js'
 import { $GC, $, $$ } from './slick-csb.js'
 import { createKissingSpheres } from './kissing-spheres.js'
 
-Object.assign(window.THREE, THREE)
-
 const ARROW_LENGTH = 180
 
 let container, stats, controls
