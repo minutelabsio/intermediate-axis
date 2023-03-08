@@ -1,0 +1,32 @@
+{
+  "name": "intermediate-axis-theorem-gh",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "sh deploy.sh"
+  },
+  "dependencies": {
+    "@wellcaffeinated/view-draw": "0.0.4",
+    "intween": "1.0.0-beta.7",
+    "lil-gui": "0.16.1",
+    "lodash": "4.17.21",
+    "parcel-bundler": "^1.6.1",
+    "store": "2.0.12",
+    "three": "0.138.2",
+    "three.meshline": "1.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.2.0",
+    "picocolors": "^1.0.0",
+    "typescript": "4.4.4",
+    "vite": "^4.1.4"
+  },
+  "resolutions": {
+    "@babel/preset-env": "7.13.8"
+  },
+  "keywords": []
+}
