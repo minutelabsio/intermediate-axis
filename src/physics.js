@@ -244,6 +244,11 @@ export const createSystem = (options) => {
       v2.multiplyScalar(-0.5).add(v2tmp4)
       x3.multiplyScalar(-0.5).add(x3tmp4)
       v3.multiplyScalar(-0.5).add(v3tmp4)
+
+      // normalize x vectors
+      x1.normalize()
+      x2.normalize()
+      x3.normalize()
     }
   })()
 
