@@ -24,6 +24,11 @@ export const createSystem = (options) => {
   const v1 = new THREE.Vector3()
   const v2 = new THREE.Vector3()
   const v3 = new THREE.Vector3()
+  const LParts = [
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+  ]
   const qRot = new THREE.Quaternion()
   const omegaRot = new THREE.Quaternion()
   const jRot = new THREE.Quaternion()
@@ -46,11 +51,10 @@ export const createSystem = (options) => {
   const tmpV = new THREE.Vector3()
   const angularMomentum = new THREE.Vector3()
   const updateAngMom = () => {
-    angularMomentum.crossVectors(x1, v1).multiplyScalar(m1)
-    tmpV.crossVectors(x2, v2).multiplyScalar(m2)
-    angularMomentum.add(tmpV)
-    tmpV.crossVectors(x3, v3).multiplyScalar(m3)
-    angularMomentum.add(tmpV)
+    LParts[0].crossVectors(x1, v1).multiplyScalar(m1)
+    LParts[1].crossVectors(x2, v2).multiplyScalar(m2)
+    LParts[2].crossVectors(x3, v3).multiplyScalar(m3)
+    angularMomentum.copy(LParts[0]).add(LParts[1]).add(LParts[2])
     jRot.setFromUnitVectors(UP, tmpV.copy(angularMomentum).normalize())
     jWorld.copy(jRot)
   }
@@ -99,6 +103,7 @@ export const createSystem = (options) => {
     )
     updateRot()
     x3.copy(X3AXIS).applyQuaternion(qRot)
+    x3.normalize()
     updateOmega()
     updateAngMom()
   }
@@ -106,9 +111,9 @@ export const createSystem = (options) => {
   const rtmp = new THREE.Vector3()
   const qtmp = new THREE.Quaternion()
   const updateRot = () => {
-    qRot.setFromUnitVectors(X1AXIS, x1.normalize())
+    qRot.setFromUnitVectors(X1AXIS, x1)
     rtmp.copy(X2AXIS).applyQuaternion(qRot)
-    qtmp.setFromUnitVectors(rtmp, x2.normalize())
+    qtmp.setFromUnitVectors(rtmp, x2)
     qRot.multiplyQuaternions(qtmp, qRot)
   }
 
@@ -305,6 +310,7 @@ export const createSystem = (options) => {
     x1,
     x2,
     x3,
+    LParts,
     getMasses: () => [m1, m2, m3],
     get I1(){
       return m2 + m3

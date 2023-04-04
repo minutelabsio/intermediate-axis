@@ -346,6 +346,14 @@ function init() {
   View.omegaTrail.mesh.scale.set(180, 180, 180)
   View.trailsGroup.add(View.omegaTrail.mesh)
 
+  // L parts
+  const disc = new THREE.RingGeometry(0, 100, 64)
+  View.LPartX1 = new THREE.Mesh(disc, new THREE.MeshBasicMaterial({ color: red, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }))
+  View.LPartX2 = new THREE.Mesh(disc, new THREE.MeshBasicMaterial({ color: blue, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }))
+  View.LPartX3 = new THREE.Mesh(disc, new THREE.MeshBasicMaterial({ color: grey, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }))
+  View.LParts = [View.LPartX1, View.LPartX2, View.LPartX3]
+  View.layout.add(View.LPartX1, View.LPartX2, View.LPartX3)
+
   // Lights
 
   const light = new THREE.DirectionalLight(0xffffdd, 0.9)
@@ -590,6 +598,16 @@ const cameraOrientator = (target, cameraOrContainer, duration = 1000) => {
   }
 }
 
+const UP = new THREE.Vector3(0, 0, 1)
+const qtmp = new THREE.Quaternion()
+const vtmp = new THREE.Vector3()
+const updateLParts = (LParts) => {
+  View.LParts.forEach((part, i) => {
+    qtmp.setFromUnitVectors(UP, vtmp.copy(LParts[i]).normalize())
+    part.rotation.setFromQuaternion(qtmp)
+  })
+}
+
 const match = (sel, cases) => (cases[sel] || cases['default'] || (() => {}))()
 
 function getPresetNames() {
@@ -696,6 +714,9 @@ function makeGui(onChange) {
     showKissingSpheres: false,
     kissInnerOpacity: 0.7,
     kissOuterOpacity: 0.5,
+    showLpart1: false,
+    showLpart2: false,
+    showLpart3: false,
 
     showPV: true,
     whichPVTrails: 0,
@@ -790,6 +811,11 @@ function makeGui(onChange) {
   omega.add(state, 'w_x', -0.02, 0.02, 1e-6).listen()
   omega.add(state, 'w_y', -0.02, 0.02, 1e-6).listen()
   omega.add(state, 'w_z', -0.02, 0.02, 1e-6).listen()
+
+  const lparts = gui.addFolder('Angular Momentum Parts').close()
+  lparts.add(state, 'showLpart1').name('L of X1')
+  lparts.add(state, 'showLpart2').name('L of X2')
+  lparts.add(state, 'showLpart3').name('L of X3')
 
   const look = gui.addFolder('View Options')
   look.add(state, 'cameraType', { Perspective: 0, Orthographic: 1 })
@@ -991,6 +1017,7 @@ function main() {
 
     View.Jframe.quaternion.copy(rotateJ ? system.jRot : system.jWorld)
     View.omegaFrame.quaternion.copy(system.omegaRot)
+    updateLParts(system.LParts)
 
     orientCamera(time)
     if (!pause) {
@@ -1106,10 +1133,7 @@ function main() {
       View.x3Arrow.line.visible =
       View.x3Arrow.cone.visible =
       state.showXVecs
-    if (system.getMasses()[2] === 0){
-      View.x3Arrow.line.visible =
-        View.x3Arrow.cone.visible = false
-    }
+
     const bt = state.whichBodyTrails
     View.x1Trail.mesh.visible =
       state.showBodyTrails && (!bt || bt === 1)
@@ -1117,6 +1141,18 @@ function main() {
       state.showBodyTrails && (!bt || bt === 2)
     View.x3Trail.mesh.visible =
       state.showBodyTrails && (!bt || bt === 3)
+
+    View.LPartX1.visible = state.showLpart1
+    View.LPartX2.visible = state.showLpart2
+    View.LPartX3.visible = state.showLpart3
+
+    if (system.getMasses()[2] === 0) {
+      View.LPartX3.visible =
+      View.x3Trail.mesh.visible =
+      View.x3Arrow.line.visible =
+        View.x3Arrow.cone.visible = false
+    }
+
     View.jTrail.mesh.visible = state.showPV && state.whichPVTrails !== 2
     View.omegaTrail.mesh.visible = state.showPV && state.whichPVTrails !== 1
 
