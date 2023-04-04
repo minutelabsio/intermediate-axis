@@ -208,12 +208,23 @@ function init() {
     100,
     4000
   )
+  View.cameraOrth = new THREE.OrthographicCamera(
+    window.innerWidth / -4,
+    window.innerWidth / 4,
+    window.innerHeight / 4,
+    window.innerHeight / -4,
+    100,
+    4000
+  )
   // View.camera.up.set(0, 0, 1)
-  View.camera.position.set(600, 400, -400)
   View.cameraContainer = new THREE.Group()
-  View.cameraContainer.add(View.camera)
+  View.cameraContainer.add(View.camera, View.cameraOrth)
   View.scene.add(View.cameraContainer)
+  View.camera.position.set(600, 400, -400)
+  View.cameraOrth.position.set(600, 400, -400)
   View.camera.lookAt(View.scene.position)
+  View.cameraOrth.lookAt(View.scene.position)
+  const cameras = [View.camera, View.cameraOrth]
 
   // ellipsoids
   View.ellipsoids = createEllipsoids(256)
@@ -361,7 +372,7 @@ function init() {
   //
 
   // ground
-  const geometry = new THREE.PlaneGeometry(8000, 8000)
+  const geometry = new THREE.PlaneGeometry(5000, 5000)
   const material = new THREE.MeshStandardMaterial({
     bumpScale: 1,
     color: 0xa6f858,
@@ -447,47 +458,50 @@ function init() {
   renderer.physicallyCorrectLights = true
   // renderer.physicallyBasedShading = true
 
-  View.composer = new EffectComposer(renderer)
-  View.renderPass = new RenderPass(View.scene, View.camera)
-  View.composer.addPass(View.renderPass)
+  View.composers = cameras.map(camera => {
+    const composer = new EffectComposer(renderer)
+    View.renderPass = new RenderPass(View.scene, camera)
+    composer.addPass(View.renderPass)
 
-  // View.saoPass = new SAOPass(View.scene, View.camera, false, true)
-  // View.saoPass.params = Object.assign(View.saoPass.params, {
-  //   saoBias: 0,
-  //   saoIntensity: 0.0004,
-  //   saoScale: 3,
-  //   saoKernelRadius: 16,
-  //   saoBlur: 1,
-  //   saoBlurRadius: 1,
-  //   saoBlurStdDev: 0.05,
-  //   saoBlurDepthCutoff: 0.05,
-  // })
-  // View.composer.addPass( View.saoPass )
+    // View.saoPass = new SAOPass(View.scene, camera, false, true)
+    // View.saoPass.params = Object.assign(View.saoPass.params, {
+    //   saoBias: 0,
+    //   saoIntensity: 0.0004,
+    //   saoScale: 3,
+    //   saoKernelRadius: 16,
+    //   saoBlur: 1,
+    //   saoBlurRadius: 1,
+    //   saoBlurStdDev: 0.05,
+    //   saoBlurDepthCutoff: 0.05,
+    // })
+    // composer.addPass( View.saoPass )
 
-  const ssaoPass = new SSAOPass(
-    View.scene,
-    View.camera,
-    window.innerWidth,
-    window.innerHeight
-  )
-  ssaoPass.kernelSize = 4
-  ssaoPass.kernelRadius = 8
-  ssaoPass.minDistance = 0.001
-  ssaoPass.maxDistance = 0.025
-  // ssaoPass.ssaoMaterial.uniforms[ 'cameraNear' ].value = 0.01
-  ssaoPass.ssaoMaterial.uniforms['cameraFar'].value = 6000
-  // View.composer.addPass(ssaoPass)
+    const ssaoPass = new SSAOPass(
+      View.scene,
+      camera,
+      window.innerWidth,
+      window.innerHeight
+    )
+    ssaoPass.kernelSize = 4
+    ssaoPass.kernelRadius = 8
+    ssaoPass.minDistance = 0.001
+    ssaoPass.maxDistance = 0.025
+    // ssaoPass.ssaoMaterial.uniforms[ 'cameraNear' ].value = 0.01
+    ssaoPass.ssaoMaterial.uniforms['cameraFar'].value = 4000
+    // composer.addPass(ssaoPass)
 
-  View.fxaaPass = new ShaderPass(FXAAShader)
-  View.fxaaPass.material.uniforms['resolution'].value.x =
-    1 / (window.innerWidth * renderer.getPixelRatio())
-  View.fxaaPass.material.uniforms['resolution'].value.y =
-    1 / (window.innerHeight * renderer.getPixelRatio())
-  View.composer.addPass(View.fxaaPass)
-  // const smaaPass = new SMAAPass( window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio() )
-  // View.composer.addPass(smaaPass)
-  const copyPass = new ShaderPass(CopyShader)
-  View.composer.addPass(copyPass)
+    View.fxaaPass = new ShaderPass(FXAAShader)
+    View.fxaaPass.material.uniforms['resolution'].value.x =
+      1 / (window.innerWidth * renderer.getPixelRatio())
+    View.fxaaPass.material.uniforms['resolution'].value.y =
+      1 / (window.innerHeight * renderer.getPixelRatio())
+    composer.addPass(View.fxaaPass)
+    // const smaaPass = new SMAAPass( window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio() )
+    // composer.addPass(smaaPass)
+    const copyPass = new ShaderPass(CopyShader)
+    composer.addPass(copyPass)
+    return composer
+  })
 
   //
 
@@ -495,14 +509,19 @@ function init() {
   container.appendChild(stats.dom)
 
   // View.camera.up.set(0, 0, 1)
-  controls = new OrbitControls(View.camera, renderer.domElement)
-  controls.minDistance = 400
-  controls.maxDistance = 2000
-  controls.rotateSpeed = 1.0
-  controls.zoomSpeed = 1.2
-  controls.panSpeed = 0.8
-  controls.enableDamping = true
-  controls.dampingFactor = 0.2
+  controls = cameras.map(camera => {
+    const control = new OrbitControls(camera, renderer.domElement)
+    control.minDistance = 400
+    control.maxDistance = 2000
+    control.rotateSpeed = 1.0
+    control.zoomSpeed = 1.2
+    control.minZoom = 0.5
+    control.maxZoom = 2
+    control.panSpeed = 0.8
+    control.enableDamping = true
+    control.dampingFactor = 0.2
+    return control
+  })
 }
 
 function onWindowResize() {
@@ -511,13 +530,19 @@ function onWindowResize() {
   View.camera.aspect = width / height
   View.camera.updateProjectionMatrix()
 
+  View.cameraOrth.left = height / -4
+  View.cameraOrth.right = height / 4
+  View.cameraOrth.top = width / 4
+  View.cameraOrth.bottom = width / -4
+  View.cameraOrth.updateProjectionMatrix()
+
   View.fxaaPass.material.uniforms['resolution'].value.x =
     1 / (width * renderer.getPixelRatio())
   View.fxaaPass.material.uniforms['resolution'].value.y =
     1 / (height * renderer.getPixelRatio())
 
   renderer.setSize(width, height)
-  View.composer.setSize(width, height)
+  View.composers.forEach(composer => composer.setSize(width, height))
 }
 
 const n = new THREE.Vector3()
@@ -542,7 +567,7 @@ const setArrow = (obj, v, setLength = false, scale = 1) => {
 
 const cameraOrientator = (target, cameraOrContainer, duration = 1000) => {
   const el = cameraOrContainer
-  const camera = el.isCamera ? el : el.children.find((c) => c.isCamera)
+  const cameras = el.isCamera ? el : el.children.filter((c) => c.isCamera)
   const q = el.quaternion.clone()
   const qe = new THREE.Quaternion()
   let start = -1
@@ -559,7 +584,9 @@ const cameraOrientator = (target, cameraOrContainer, duration = 1000) => {
       qe.setFromRotationMatrix(target.matrixWorld),
       Easing.quadOut(k)
     )
-    camera.up.set(0, 1, 0).applyQuaternion(el.quaternion)
+    cameras.forEach((camera) => {
+      camera.up.set(0, 1, 0).applyQuaternion(el.quaternion)
+    })
   }
 }
 
@@ -651,6 +678,7 @@ function makeGui(onChange) {
     },
     L: 0.013,
     energy_scale: 1,
+    cameraType: 0,
     frame: frameChoices[0],
     showXVecs: false,
     showAxes: true,
@@ -711,6 +739,9 @@ function makeGui(onChange) {
   cameraFolder.add(View.camera.position, 'x')
   cameraFolder.add(View.camera.position, 'y')
   cameraFolder.add(View.camera.position, 'z')
+  cameraFolder.add(View.cameraOrth.position, 'x')
+  cameraFolder.add(View.cameraOrth.position, 'y')
+  cameraFolder.add(View.cameraOrth.position, 'z')
 
   const initialConditions = gui.addFolder('Initial Conditions')
 
@@ -729,7 +760,7 @@ function makeGui(onChange) {
   }
 
   initialConditions.add(state, 'psi', 0, 180, 1)
-  initialConditions.add(state, 'chi', 0, 180, 1)
+  initialConditions.add(state, 'chi', 0, 360, 1)
   initialConditions.add(state, 'L', 0, 0.03, 0.001).name('L')
   rCtrl = initialConditions
     .add(state, 'r', 0.02, 1, 0.01)
@@ -761,6 +792,7 @@ function makeGui(onChange) {
   omega.add(state, 'w_z', -0.02, 0.02, 1e-6).listen()
 
   const look = gui.addFolder('View Options')
+  look.add(state, 'cameraType', { Perspective: 0, Orthographic: 1 })
   look
     .add(state, 'singleSidedMasses')
     .name('Single Sided Masses')
@@ -918,6 +950,7 @@ function main() {
     return 2 * sign * tmpV.angleTo(x2) - Math.PI / 2
   }
 
+  let cameraType
   let showOmega = true
   let showJ = true
   let rotateJ
@@ -963,10 +996,10 @@ function main() {
     if (!pause) {
       updateTrails()
     }
-    controls.update()
+    controls[cameraType].update()
     // View.camera.lookAt(View.scene.position)
     // renderer.render(View.scene, View.camera)
-    View.composer.render()
+    View.composers[cameraType].render()
 
     pendulumView.update({
       angle: getPendulumAngle(system.x1, system.x2, system.angularMomentum),
@@ -1013,6 +1046,7 @@ function main() {
       pause = e.value
       return
     }
+    cameraType = state.cameraType
     normalizedArrows = state.normalizedArrows
     arrowScale = state.arrowScale
     showOmega = state.showOmega

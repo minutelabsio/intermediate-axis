@@ -10,7 +10,6 @@ export const createSystem = (options) => {
   // const R = 10
   // const Rsq = R * R
   const totalMass = 4
-  let massRatio = 1
   let m1 = 2
   let m2 = 2
   let m3 = 0
@@ -69,7 +68,6 @@ export const createSystem = (options) => {
   }
 
   const setMassRatio = (r = 1, q = 0) => {
-    massRatio = r
     m1 = totalMass / (1 + r + q)
     m2 = r * m1
     m3 = q * m1
