@@ -166,6 +166,8 @@ function createSpinner(texture) {
   const setSingleSided = (toggle) => {
     massRed2.mesh.visible = !toggle
     massBlue2.mesh.visible = !toggle
+    massGrey2.mesh.visible = !toggle
+    rodg2.visible = !toggle
     rod2.visible = !toggle
   }
 
@@ -273,6 +275,13 @@ function init() {
     blue
   )
   View.layout.add(View.x2Arrow)
+  View.x3Arrow = new THREE.ArrowHelper(
+    new THREE.Vector3(),
+    View.layout.position,
+    50,
+    grey
+  )
+  View.layout.add(View.x3Arrow)
 
   // trails
   View.trailsGroup = new THREE.Group()
@@ -296,6 +305,15 @@ function init() {
   })
   View.x2Trail.mesh.scale.set(100, 100, 100)
   View.trailsGroup.add(View.x2Trail.mesh)
+  View.x3Trail = Trail({
+    renderer,
+    throttleDistance: 0.01,
+    maxSize: 1000,
+    maxDistance: 10,
+    color: grey,
+  })
+  View.x3Trail.mesh.scale.set(100, 100, 100)
+  View.trailsGroup.add(View.x3Trail.mesh)
 
   View.jTrail = Trail({
     renderer,
@@ -634,7 +652,7 @@ function makeGui(onChange) {
     L: 0.013,
     energy_scale: 1,
     frame: frameChoices[0],
-    showXVecs: true,
+    showXVecs: false,
     showAxes: true,
     showBg: true,
     singleSidedMasses: false,
@@ -749,6 +767,7 @@ function makeGui(onChange) {
     .onChange((toggle) => {
       View.spinner.setSingleSided(toggle)
     })
+  look.add(state, 'showXVecs').name('x vectors')
   look.add(state, 'showAxes').name('axes')
   look.add(state, 'showBg').name('environment')
   look.add(state, 'frame', frameChoices)
@@ -807,7 +826,7 @@ function makeGui(onChange) {
 
   const trails = gui.addFolder('Trails')
   trails.add(state, 'showBodyTrails').name('body trails')
-  trails.add(state, 'whichBodyTrails', { Both: 0, Mass1: 1, Mass2: 2 })
+  trails.add(state, 'whichBodyTrails', { All: 0, Mass1: 1, Mass2: 2, Mass3: 3 })
   trails.add(state, 'showPV').name('pseudovector trials')
   trails.add(state, 'whichPVTrails', { Both: 0, J: 1, omega: 2 })
   trails
@@ -865,12 +884,13 @@ function main() {
     requestAnimationFrame(animate)
   }
 
-  const trails = [View.x1Trail, View.x2Trail, View.jTrail, View.omegaTrail]
+  const trails = [View.x1Trail, View.x2Trail, View.x3Trail, View.jTrail, View.omegaTrail]
 
   const tmpV = new THREE.Vector3()
   const updateTrails = () => {
     View.x1Trail.update(system.x1, trailsTarget)
     View.x2Trail.update(system.x2, trailsTarget)
+    View.x3Trail.update(system.x3, trailsTarget)
     View.jTrail.update(
       tmpV.copy(system.angularMomentum).normalize(),
       trailsTarget
@@ -934,6 +954,7 @@ function main() {
     View.omegaArrow.visible = showOmega && View.omegaArrow.visible
     setArrow(View.x1Arrow, system.x1)
     setArrow(View.x2Arrow, system.x2)
+    setArrow(View.x3Arrow, system.x3)
 
     View.Jframe.quaternion.copy(rotateJ ? system.jRot : system.jWorld)
     View.omegaFrame.quaternion.copy(system.omegaRot)
@@ -1044,12 +1065,24 @@ function main() {
     if (prevFrame !== cameraTarget) {
       orientCamera = cameraOrientator(cameraTarget, View.cameraContainer)
     }
-    View.x1Arrow.line.visible = View.x1Arrow.cone.visible = View.x2Arrow.line.visible = View.x2Arrow.cone.visible =
+    View.x1Arrow.line.visible =
+      View.x1Arrow.cone.visible =
+      View.x2Arrow.line.visible =
+      View.x2Arrow.cone.visible =
+      View.x3Arrow.line.visible =
+      View.x3Arrow.cone.visible =
       state.showXVecs
+    if (system.getMasses()[2] === 0){
+      View.x3Arrow.line.visible =
+        View.x3Arrow.cone.visible = false
+    }
+    const bt = state.whichBodyTrails
     View.x1Trail.mesh.visible =
-      state.showBodyTrails && state.whichBodyTrails !== 2
+      state.showBodyTrails && (!bt || bt === 1)
     View.x2Trail.mesh.visible =
-      state.showBodyTrails && state.whichBodyTrails !== 1
+      state.showBodyTrails && (!bt || bt === 2)
+    View.x3Trail.mesh.visible =
+      state.showBodyTrails && (!bt || bt === 3)
     View.jTrail.mesh.visible = state.showPV && state.whichPVTrails !== 2
     View.omegaTrail.mesh.visible = state.showPV && state.whichPVTrails !== 1
 
