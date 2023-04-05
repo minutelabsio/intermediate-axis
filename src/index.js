@@ -1051,8 +1051,8 @@ function main() {
   ]
 
   const restart = (state) => {
-    system.setMassRatio(state.r, state.q)
     system.setInitialPosition(state.psi, state.chi)
+    system.setMassRatio(state.r, state.q)
     system.setOmega(state.omega)
     View.spinner.setMasses(...system.getMasses())
     system.zeroTime()
