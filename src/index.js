@@ -201,6 +201,9 @@ function init() {
   View.omegaFrame = new THREE.Object3D()
   View.layout.add(View.omegaFrame)
 
+  View.ellipseFrame = new THREE.Object3D()
+  View.layout.add(View.ellipseFrame)
+
   // camera
   View.camera = new THREE.PerspectiveCamera(
     40,
@@ -579,13 +582,16 @@ const cameraOrientator = (target, cameraOrContainer, duration = 1000) => {
   const q = el.quaternion.clone()
   const qe = new THREE.Quaternion()
   let start = -1
+  let done = false
   return (time = performance.now()) => {
+    if (done) { return }
     if (start < 0) {
       start = time
       q.copy(el.quaternion)
       return
     }
     const k = Util.invLerpClamped(start, start + duration, time)
+    if (k > 1){ done = true }
     target.updateMatrixWorld()
     el.quaternion.slerpQuaternions(
       q,
@@ -630,7 +636,7 @@ function loadPreset(name) {
 
 function makeGui(onChange) {
   let presetList = getPresetNames()
-  const frameChoices = ['world', 'J', 'J up', 'body', 'omega_0']
+  const frameChoices = ['world', 'J', 'J up', 'body', 'omega_0', 'ellipse']
   let pauseCtrl
   let loadPresetCtrl
   let currentPresetCtrl
@@ -819,6 +825,7 @@ function makeGui(onChange) {
 
   const look = gui.addFolder('View Options')
   look.add(state, 'cameraType', { Perspective: 0, Orthographic: 1 })
+  look.add(state, 'frame', frameChoices)
   look
     .add(state, 'singleSidedMasses')
     .name('Single Sided Masses')
@@ -828,7 +835,6 @@ function makeGui(onChange) {
   look.add(state, 'showXVecs').name('x vectors')
   look.add(state, 'showAxes').name('axes')
   look.add(state, 'showBg').name('environment')
-  look.add(state, 'frame', frameChoices)
 
   // ellipsoids
   const ell = gui.addFolder('Ellipsoids')
@@ -976,6 +982,8 @@ function main() {
     return 2 * sign * tmpV.angleTo(x2) - Math.PI / 2
   }
 
+  const flipQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI)
+
   let cameraType
   let showOmega = true
   let showJ = true
@@ -1016,6 +1024,9 @@ function main() {
     setArrow(View.x3Arrow, system.x3)
 
     View.Jframe.quaternion.copy(rotateJ ? system.jRot : system.jWorld)
+    View.ellipseFrame.quaternion.copy(system.jWorld).multiply(flipQ)
+    // View.ellipseFrame.position.copy(View.omegaPlane.plane.normal)
+    //   .multiplyScalar(View.omegaPlane.plane.constant)
     View.omegaFrame.quaternion.copy(system.omegaRot)
     updateLParts(system.LParts)
 
@@ -1093,6 +1104,10 @@ function main() {
         trailsTarget = View.scene
         trailsFrame = View.layout
       },
+      'ellipse': () => {
+        trailsTarget = View.scene
+        trailsFrame = View.layout
+      },
       J: () => {
         trailsTarget = View.Jframe
         trailsFrame = trailsTarget
@@ -1119,6 +1134,7 @@ function main() {
       J: () => View.Jframe,
       omega_0: () => View.omegaFrame,
       body: () => View.spinner.group,
+      ellipse: () => View.ellipseFrame,
     })
 
     rotateJ = state.frame !== 'J up'

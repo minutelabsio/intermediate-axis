@@ -48,6 +48,7 @@ export const createSystem = (options) => {
     return into
   }
 
+  const UPWorld = new THREE.Vector3(0, 1, 0)
   const tmpV = new THREE.Vector3()
   const angularMomentum = new THREE.Vector3()
   const updateAngMom = () => {
@@ -55,7 +56,7 @@ export const createSystem = (options) => {
     LParts[1].crossVectors(x2, v2).multiplyScalar(m2)
     LParts[2].crossVectors(x3, v3).multiplyScalar(m3)
     angularMomentum.copy(LParts[0]).add(LParts[1]).add(LParts[2])
-    jRot.setFromUnitVectors(UP, tmpV.copy(angularMomentum).normalize())
+    jRot.setFromUnitVectors(UPWorld, tmpV.copy(angularMomentum).normalize())
     jWorld.copy(jRot)
   }
 
